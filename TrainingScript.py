@@ -33,7 +33,7 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 1000)
 
-df = pd.read_csv('train.csv', skiprows=1, names=(
+df = pd.read_csv('og_train.csv', skiprows=1, names=(
 	'Gender', 'Married', 'Dependents', 'Education', 'Self_Employed', 'Applicant_Income',
 	'Coapplicant_Income', 'Loan_amount', 'Term', 'Credit_History', 'Area', 'Status'
 ))
@@ -122,6 +122,7 @@ for train_index, test_index in kfold.split(X):
 		""" Logistic model """
 		logistic = LogisticRegression(fit_intercept=True, solver='liblinear')
 		
+		""" RFE for feature selection - used results in combination with EDA observations """
 		# rfe = RFE(logistic)
 		#
 		# rfe = rfe.fit(X_train_scaled, y_train)
