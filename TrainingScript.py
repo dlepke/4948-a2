@@ -13,7 +13,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.impute import KNNImputer
-from sklearn.model_selection import KFold
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.feature_selection import RFE
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -29,9 +33,6 @@ df['Credit_History'].replace([0, 1], ['Y', 'N'], inplace=True)  # so get_dummies
 
 df = pd.get_dummies(df)
 
-print(df.head())
-print(df.dtypes)
-
 X = df.copy()
 del X['Status']
 
@@ -45,8 +46,50 @@ X = imputer.fit_transform(X)
 
 X = pd.DataFrame(X, columns=columns)
 
-# print(X.describe())
+""" Optimized for logistic model. """
+# X = X[[
+# 	'Applicant_Income',
+# 	'Coapplicant_Income',
+# 	'Loan_amount',
+# 	'Married_No',
+# 	'Dependents_2',
+# 	'Education_Graduate',
+# 	'Self_Employed_Yes',
+# 	'Credit_History_N',
+# 	'Credit_History_Y',
+# 	'Area_Semiurban'
+# ]]
+#
+# columns = X.columns
 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+scaler = MinMaxScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+X_train_scaled = pd.DataFrame(X_train_scaled, columns=columns)
+
+"""Logistic model"""
+logistic = LogisticRegression(fit_intercept=True, solver='liblinear')
+
+# rfe = RFE(logistic)
+#
+# rfe = rfe.fit(X_train_scaled, y_train)
+
+# for i in range(len(X_train_scaled.keys())):
+# 	if rfe.support_[i]:
+# 		print(X.keys()[i])
+
+logistic.fit(X_train_scaled, y_train)
+
+logistic_pred = logistic.predict(X_test_scaled)
+
+cm = pd.crosstab(y_test['Status'], logistic_pred, rownames=['Actual'], colnames=['Predicted'])
+print(cm)
+print(classification_report(y_test, logistic_pred))
+
+"""EDA graphs"""
 # default = df[df['Status'] == 1]
 # no_default = df[df['Status'] == 0]
 
