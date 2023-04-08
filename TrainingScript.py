@@ -1,20 +1,10 @@
 """
-Requirements:
-- stacked model
-	- neural net
-	- something else
-- try scaling
 - load binaries into folder
-- knnimputer
-
-Used:
-- RFE (3948 lesson 6)
-- MinMaxScaler (3948 lesson 5)
-- ANN grid search (4948 lesson 5)
 """
 
 import pandas as pd
 import numpy as np
+from pickle import dump
 import matplotlib.pyplot as plt
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import MinMaxScaler
@@ -57,7 +47,7 @@ X = imputer.fit_transform(X)
 
 X = pd.DataFrame(X, columns=columns)
 
-""" Optimized for logistic model.  *altered now """
+""" Optimized for logistic model. """
 X = X[[
 	'Applicant_Income',
 	'Coapplicant_Income',
@@ -100,8 +90,12 @@ columns = X.columns
 accuracies = []
 precisions = []
 
-kfold = KFold(n_splits=5)
+kfold = KFold(n_splits=2)
 
+""" train trains base models,
+	test produces training data for stacked model,
+	val tests stacked model
+	test.csv contains separate test data for production testing """
 for train_index, test_index in kfold.split(X):
 	X_train = X.iloc[train_index, :]
 	y_train = y.iloc[train_index, :]
@@ -117,7 +111,11 @@ for train_index, test_index in kfold.split(X):
 		X_test_scaled = scaler.transform(X_test)
 		X_val_scaled = scaler.transform(X_val)
 		
+		dump(scaler, open('BinaryFolder/scaler.pkl', 'wb'))
+		
 		X_train_scaled = pd.DataFrame(X_train_scaled, columns=columns)
+		X_test_scaled = pd.DataFrame(X_test_scaled, columns=columns)
+		X_val_scaled = pd.DataFrame(X_val_scaled, columns=columns)
 		
 		""" Logistic model """
 		logistic = LogisticRegression(fit_intercept=True, solver='liblinear')
@@ -207,7 +205,10 @@ for train_index, test_index in kfold.split(X):
 								num_neurons=num_neurons, activation=activator, num_hidden_layers=hidden_layers,
 								initializer=initializer, learning_rate=learning_rate)
 							
-							ann.fit(X_train_scaled, y_train, epochs=500, verbose=1)
+							es = EarlyStopping(monitor='loss', patience=20)
+							mc = ModelCheckpoint('best_model.h5', monitor="val_accuracy", mode='max', verbose=1)
+							
+							ann.fit(X_train_scaled, y_train, epochs=500, verbose=1, callbacks=[es, mc])
 							
 							loss, acc = ann.evaluate(X_test_scaled, y_test, verbose=0)
 							print('Test accuracy: %.3f' % acc)
@@ -284,6 +285,11 @@ for train_index, test_index in kfold.split(X):
 		cm = pd.crosstab(y_val['Status'], stacked_predictions, rownames=['Actual'], colnames=['Predicted'])
 		print(cm)
 		print(classification_report(y_val['Status'], stacked_predictions))
+		
+
+dump(logistic, open('BinaryFolder/logistic.pkl', 'wb'))
+dump(ann, open('BinaryFolder/ann.pkl', 'wb'))
+dump(stacked, open('BinaryFolder/stacked.pkl', 'wb'))
 		
 print(accuracies)
 print(precisions)
