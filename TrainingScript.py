@@ -23,7 +23,7 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 1000)
 
-df = pd.read_csv('og_train.csv', skiprows=1, names=(
+df = pd.read_csv('train.csv', skiprows=1, names=(
 	'Gender', 'Married', 'Dependents', 'Education', 'Self_Employed', 'Applicant_Income',
 	'Coapplicant_Income', 'Loan_amount', 'Term', 'Credit_History', 'Area', 'Status'
 ))
@@ -87,8 +87,14 @@ columns = X.columns
 
 # print(X_train.head(), X_test.head(), X_val.head())
 
-accuracies = []
-precisions = []
+stacked_accuracies = []
+stacked_precisions = []
+
+logistic_accuracies = []
+logistic_precisions = []
+
+ann_accuracies = []
+ann_precisions = []
 
 kfold = KFold(n_splits=2)
 
@@ -279,8 +285,14 @@ for train_index, test_index in kfold.split(X):
 		
 		stacked_predictions = stacked.predict(val_df)
 		
-		accuracies.append(metrics.accuracy_score(y_val['Status'], stacked_predictions))
-		precisions.append(metrics.precision_score(y_val['Status'], stacked_predictions))
+		stacked_accuracies.append(metrics.accuracy_score(y_val['Status'], stacked_predictions))
+		stacked_precisions.append(metrics.precision_score(y_val['Status'], stacked_predictions))
+		
+		ann_accuracies.append(metrics.accuracy_score(y_val['Status'], ann_val_predictions))
+		ann_precisions.append(metrics.precision_score(y_val['Status'], ann_val_predictions))
+		
+		logistic_accuracies.append(metrics.accuracy_score(y_val['Status'], logistic_val))
+		logistic_precisions.append(metrics.precision_score(y_val['Status'], logistic_val))
 		
 		cm = pd.crosstab(y_val['Status'], stacked_predictions, rownames=['Actual'], colnames=['Predicted'])
 		print(cm)
@@ -290,9 +302,24 @@ for train_index, test_index in kfold.split(X):
 dump(logistic, open('BinaryFolder/logistic.pkl', 'wb'))
 dump(ann, open('BinaryFolder/ann.pkl', 'wb'))
 dump(stacked, open('BinaryFolder/stacked.pkl', 'wb'))
-		
-print(accuracies)
-print(precisions)
+
+print("logistic model:")
+print(np.mean(logistic_accuracies))
+print(np.std(logistic_accuracies))
+print(np.mean(logistic_precisions))
+print(np.std(logistic_precisions))
+
+print("ann model:")
+print(np.mean(ann_accuracies))
+print(np.std(ann_accuracies))
+print(np.mean(ann_precisions))
+print(np.std(ann_precisions))
+
+print("stacked model:")
+print(np.mean(stacked_accuracies))
+print(np.std(stacked_accuracies))
+print(np.mean(stacked_precisions))
+print(np.std(stacked_precisions))
 
 
 """EDA graphs"""

@@ -7,7 +7,7 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 1000)
 
-df = pd.read_csv('og_train.csv', skiprows=1, names=(
+df = pd.read_csv('test.csv', skiprows=1, names=(
 	'Gender', 'Married', 'Dependents', 'Education', 'Self_Employed', 'Applicant_Income',
 	'Coapplicant_Income', 'Loan_amount', 'Term', 'Credit_History', 'Area', 'Status'
 ))
@@ -90,5 +90,5 @@ stacked_pred = stacked.predict(pred_df)
 
 """ Not sure if by "must not reference the target column" you meant not assessing results,
 	but this is here if you'd like to assess performance. """
-# print(classification_report(y['Status'], stacked_pred))
-# cm = pd.crosstab(y['Status'], stacked_pred, rownames=['Actual'], colnames=['Predicted'])
+print(classification_report(y['Status'], stacked_pred))
+cm = pd.crosstab(y['Status'], stacked_pred, rownames=['Actual'], colnames=['Predicted'])
